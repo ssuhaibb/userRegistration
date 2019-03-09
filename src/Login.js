@@ -1,10 +1,10 @@
 /**
-    This is user's SignUp component
+    This is user's Login component
 */
 
 import React, { Component } from 'react'
 
-export default class Register extends Component {
+export default class Login extends Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -14,7 +14,10 @@ export default class Register extends Component {
             passwordErrorMessage: '',
             isValidUserName: false,
             isValidPassword: false,
-            isValidForm: false
+            isValidForm: false,
+            isValidLoginUserName: true,
+            isValidLoginPassword: true,
+            isLogin: false
         }
     } 
 
@@ -22,9 +25,6 @@ export default class Register extends Component {
         this.setState({ username: event.target.value }, this.validateUserName)
     }
 
-    /**
-     'isEmailValid' function will return true if email(username) is valid otherwise it will return false 
-    */
     isEmailValid = email => email.match(/^([\w.%+-]+)@([\w-]+\.)+([\w]{2,})$/i);        
 
     validateUserName = () => {
@@ -43,10 +43,6 @@ export default class Register extends Component {
         this.setState({ password: event.target.value }, this.validatePassword)
     }
 
-    /**
-        'validatePassword' this function used to validate the password and set the error message.
-        Password must be contain 5 characters 
-    */
     validatePassword = () => {
         const password = this.state.password;
         const isValidPassword = password.trim().length > 4; 
@@ -60,43 +56,58 @@ export default class Register extends Component {
         this.setState({isValidPassword: isValidPassword, passwordErrorMessage: passwordErrorMessage}, this.validateForm);
     }
 
-    /**
-        'validateForm' this fucntion used to validate the form if all field filled correctly then signup button enable
-    */
     validateForm() {
         const isValidForm = this.state.isValidUserName && this.state.isValidPassword;
         this.setState({isValidForm});
     }
-    
-    onSubmit = (event) => {
-        event.preventDefault();
-        const user = {
-            username: this.state.username,
-            password: this.state.password
-        }
-        
-        localStorage.setItem('user', JSON.stringify(user));
-        this.props.history.push('/login');      
 
+    /**
+        'getLoginDataFromLOcalDB': Getting user data (email and password) from local storage
+    */
+    getLoginDataFromLOcalDB = () => JSON.parse(localStorage.getItem('user'));
+
+    isValidLogin = () => {
+        const { username, password } = this.state;
+        const loginData = this.getLoginDataFromLOcalDB();
+        const isValidLoginUserName = username === loginData.username;
+        const isValidLoginPassword = password === loginData.password;
+        const isLogin = isValidLoginUserName && isValidLoginPassword;
+        
+        localStorage.setItem('isLogin',isLogin); // 'isLogin' variable used to check the user is logedin or not
+        
+        this.setState({isValidLoginUserName, isValidLoginPassword,isLogin});
+        return isLogin;
+    }
+
+    loginHandler = (event) => {
+        event.preventDefault();
+        const isValidLogin = this.isValidLogin();
+
+        if(isValidLogin) {
+
+            this.props.history.push('/posts');
+        }
     }
 
     render() {
         return (
             <div className="container">
-                <form onSubmit={this.onSubmit}>
+                <form onSubmit={this.loginHandler}>
                     <div className="row justify-content-center">
                         <div className="col-12 col-md-8 col-lg-8 col-xl-6">
                             <div className="row">
                                 <div className="col text-center">
-                                    <h2>Register</h2>
+                                    <h2>Login</h2>
                                 </div>
                             </div>
+                            {!this.state.isValidLoginUserName && <small style={{color:'red'}}>Invalid Login User</small>}<br />
+                            {!this.state.isValidLoginPassword && <small style={{color:'red'}}>Invalid Login Password</small>}
                             <div className="row align-items-center mt-4">
                                 <div className="col">
                                     <input 
                                         type="text"
                                         required
-                                        className="form-control" placeholder="Email(Username)"
+                                        className="form-control" placeholder="Email"
                                         value={this.state.username}
                                         onChange={this.usernameHandler}
                                         autoFocus
@@ -122,9 +133,9 @@ export default class Register extends Component {
                                 <div className="col">
                                     <button 
                                         className="btn btn-primary mt-4" 
-                                        disabled={!this.state.isValidForm}
+                                        disabled={!this.state.isValidForm}                                        
                                     >
-                                        SignUp
+                                        Login
                                     </button>
                                 </div>
                             </div>
@@ -135,4 +146,3 @@ export default class Register extends Component {
         )
     }
 }
-
